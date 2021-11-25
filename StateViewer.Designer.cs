@@ -3,16 +3,29 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 namespace stateViewer
 {
   partial class StateViewer
   {
+    private static readonly IntPtr HWND_TOPMOST = new IntPtr(-1);
+    private const UInt32 SWP_NOSIZE = 0x0001;
+    private const UInt32 SWP_NOMOVE = 0x0002;
+    private const UInt32 TOPMOST_FLAGS = SWP_NOMOVE | SWP_NOSIZE;
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
+
     private const int edgeWidth = 16;
     private const int headerWidth = 32;
+    private const int buttonSize = 24;
     private System.ComponentModel.IContainer components = null;
     private Dictionary<string, State> StateMap;
     private FlowLayoutPanel Flp;
+    private Button MinimizeButton;
+    private Button CloseButton;
 
     protected override void Dispose(bool disposing)
     {
@@ -30,18 +43,52 @@ namespace stateViewer
       this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
       this.Text = "state viewer";
       this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
+      this.MinimumSize = new Size(buttonSize * 3, buttonSize * 2);
+      this.Padding = new Padding(edgeWidth, headerWidth, edgeWidth, edgeWidth);
+      this.BackColor = Color.LightGray;
+
+      this.CloseButton = new Button();
+      this.CloseButton.Text = "x";
+      this.CloseButton.Size = new Size(buttonSize, buttonSize);
+      this.CloseButton.Anchor = AnchorStyles.Right | AnchorStyles.Top;
+      this.CloseButton.Location = new Point(this.ClientSize.Width - buttonSize, 0);
+      this.CloseButton.Click += this.Close;
+      this.Controls.Add(this.CloseButton);
+
+      this.MinimizeButton = new Button();
+      this.MinimizeButton.Text = "_";
+      this.MinimizeButton.Size = new Size(buttonSize, buttonSize);
+      this.MinimizeButton.Anchor = AnchorStyles.Right | AnchorStyles.Top;
+      this.MinimizeButton.Location = new Point(this.ClientSize.Width - buttonSize * 2 , 0);
+      this.MinimizeButton.Click += this.Minimize;
+      this.Controls.Add(this.MinimizeButton);
 
       this.Flp = new FlowLayoutPanel();
-      this.Padding = new Padding(edgeWidth, headerWidth, edgeWidth, edgeWidth);
       this.Flp.AutoSize = true;
       this.Flp.AutoSizeMode = AutoSizeMode.GrowOnly;
       this.Flp.WrapContents = false;
-
+      this.Flp.BackColor = Color.White;
       this.Flp.FlowDirection = FlowDirection.TopDown;
-      this.Flp.Dock = DockStyle.Top;
+      this.Flp.Dock = DockStyle.Fill;
       this.Controls.Add(this.Flp);
 
+      this.Shown += this.StateViewer_Shown;
+
       NamedPipe.Listen("stateViewer", this.SetState);
+    }
+    private void StateViewer_Shown(object sender, EventArgs e)
+    {
+      SetWindowPos(this.Handle, HWND_TOPMOST, 0, 0, 0, 0, TOPMOST_FLAGS);
+    }
+
+    private void Close(object sender, EventArgs e)
+    {
+      this.Dispose();
+    }
+
+    private void Minimize(object sender, EventArgs e)
+    {
+      this.WindowState = FormWindowState.Minimized;
     }
 
     private int IsEdge(Point p)
