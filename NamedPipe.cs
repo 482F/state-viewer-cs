@@ -12,24 +12,20 @@ namespace stateViewer
     {
       while (true)
       {
-        using var pipeServer = new NamedPipeServerStream(pipeName, PipeDirection.In);
+        using var pipeServer = new NamedPipeServerStream(pipeName, PipeDirection.In, 1);
         await pipeServer.WaitForConnectionAsync();
 
         using var ms = new MemoryStream();
-        var buf = new byte[16];
-        var size = 1;
-        while (size != 0)
-        {
-          size = pipeServer.Read(buf);
-          ms.Write(buf);
-        }
+        pipeServer.CopyTo(ms);
+        pipeServer.Disconnect();
+        pipeServer.Close();
         action(Encoding.UTF8.GetString(ms.ToArray()));
       }
     }
     async static public void Send(string pipeName, string message)
     {
       using var pipeClient = new NamedPipeClientStream(".", pipeName, PipeDirection.Out, PipeOptions.None, TokenImpersonationLevel.Impersonation);
-      await pipeClient.ConnectAsync();
+      await pipeClient.ConnectAsync(60000);
       var bs = Encoding.UTF8.GetBytes(message);
       pipeClient.Write(bs);
       pipeClient.Flush();
