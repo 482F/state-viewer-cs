@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using System.Web;
 using System.Windows.Forms;
 
 namespace stateViewer
@@ -14,21 +15,21 @@ namespace stateViewer
     {
       AttachConsole(-1);
 
-      if (args[0] == "main")
+      if (args[0] == "set")
+      {
+        NamedPipe.Send("stateViewer", args[1]);
+      }
+      else if (args[0] == "by-url")
+      {
+        var gArgs = HttpUtility.UrlDecode(args[1].Replace("stateviewer://", "")).Split('/');
+        Main(gArgs);
+      }
+      else
       {
         Application.SetHighDpiMode(HighDpiMode.SystemAware);
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
         Application.Run(new StateViewer());
-      }
-      else if (args[0] == "send")
-      {
-        NamedPipe.Send("stateViewer", args[1]);
-      }
-      else if (args[0] == "set-by-url")
-      {
-        var message = args[1].Replace("stateviewer://", "").Replace("/", ",");
-        NamedPipe.Send("stateViewer", message);
       }
     }
   }
