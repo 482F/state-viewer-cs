@@ -17,7 +17,7 @@ namespace stateViewer
 
       if (args[0] == "set")
       {
-        NamedPipe.Send("stateViewer", args[1]);
+        NamedPipe.Send("stateViewer", args[1]).Wait();
       }
       else if (args[0] == "by-url")
       {

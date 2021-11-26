@@ -93,7 +93,7 @@ namespace stateViewer
       this.Load += this.StateViewer_Load;
       this.Shown += this.StateViewer_Shown;
 
-      NamedPipe.Listen("stateViewer", this.SetState);
+      var _ = NamedPipe.Listen("stateViewer", this.SetState);
     }
     private void StateViewer_Load(object sender, EventArgs e)
     {
