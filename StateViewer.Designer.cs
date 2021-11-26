@@ -1,4 +1,5 @@
 using System;
+using System.Configuration;
 using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
@@ -21,6 +22,7 @@ namespace stateViewer
     private const int edgeWidth = 16;
     private const int headerWidth = 32;
     private const int buttonSize = 24;
+    private Configuration config;
     private System.ComponentModel.IContainer components = null;
     private Dictionary<string, State> StateMap;
     private FlowLayoutPanel Flp;
@@ -29,6 +31,11 @@ namespace stateViewer
 
     protected override void Dispose(bool disposing)
     {
+      setSetting("x", this.Location.X);
+      setSetting("y", this.Location.Y);
+      setSetting("width", this.Size.Width);
+      setSetting("height", this.Size.Height);
+      this.config.Save();
       if (disposing && (components != null))
       {
         components.Dispose();
@@ -36,8 +43,19 @@ namespace stateViewer
       base.Dispose(disposing);
     }
 
+    private int getSetting(string key)
+    {
+      return Int32.Parse(this.config.AppSettings.Settings[key].Value);
+    }
+    private void setSetting(string key, int value)
+    {
+      this.config.AppSettings.Settings[key].Value = value.ToString();
+    }
+
     private void InitializeComponent()
     {
+      this.config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+
       this.StateMap = new Dictionary<string, State>();
       this.components = new Container();
       this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -59,7 +77,7 @@ namespace stateViewer
       this.MinimizeButton.Text = "_";
       this.MinimizeButton.Size = new Size(buttonSize, buttonSize);
       this.MinimizeButton.Anchor = AnchorStyles.Right | AnchorStyles.Top;
-      this.MinimizeButton.Location = new Point(this.ClientSize.Width - buttonSize * 2 , 0);
+      this.MinimizeButton.Location = new Point(this.ClientSize.Width - buttonSize * 2, 0);
       this.MinimizeButton.Click += this.Minimize;
       this.Controls.Add(this.MinimizeButton);
 
@@ -72,13 +90,19 @@ namespace stateViewer
       this.Flp.Dock = DockStyle.Fill;
       this.Controls.Add(this.Flp);
 
+      this.Load += this.StateViewer_Load;
       this.Shown += this.StateViewer_Shown;
 
       NamedPipe.Listen("stateViewer", this.SetState);
     }
+    private void StateViewer_Load(object sender, EventArgs e)
+    {
+      this.Location = new Point(getSetting("x"), getSetting("y"));
+      this.Size = new Size(getSetting("width"), getSetting("height"));
+    }
     private void StateViewer_Shown(object sender, EventArgs e)
     {
-      SetWindowPos(this.Handle, HWND_TOPMOST, 0, 0, 0, 0, TOPMOST_FLAGS);
+      SetWindowPos(this.Handle, HWND_TOPMOST, getSetting("x"), getSetting("y"), getSetting("width"), getSetting("height"), TOPMOST_FLAGS);
     }
 
     private void Close(object sender, EventArgs e)
