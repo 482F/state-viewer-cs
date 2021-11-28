@@ -1,0 +1,3 @@
+[submodule "NamedPipe"]
+	path = NamedPipe
+	url = git@github.com:482F/NamedPipeCS.git
